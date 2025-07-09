@@ -75,10 +75,10 @@ class RateLimiterWithRedis(object):
             ],
         )
 
-    async def wait_for_capacity(self, num_tokens):
+    async def wait_for_capacity(self, num_tokens, *, timeout: float | None = None):
         await self._init_buckets()
         await self._buckets.wait_for_capacity(
-            amounts=[1, num_tokens], sleep_interval=self.sleep_interval
+            amounts=[1, num_tokens], sleep_interval=self.sleep_interval, timeout=timeout
         )
 
     def wait_for_capacity_sync(self, num_tokens):

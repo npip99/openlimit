@@ -100,11 +100,18 @@ class RedisBuckets(object):
         return has_capacity
 
     async def wait_for_capacity(
-        self, amounts: list[float], sleep_interval: float = 1e-1
+        self, amounts: list[float], sleep_interval: float = 1e-1, *, timeout: float | None = None,
     ):
-
+        t0 = time.time()
         while not await self._has_capacity_async(amounts):
-            await asyncio.sleep(sleep_interval)
+            if timeout is None:
+                await asyncio.sleep(sleep_interval)
+            else:
+                remaining_time = timeout - (time.time() - t0)
+                if remaining_time < 0:
+                    raise TimeoutError("Lock Timed Out")
+                else:
+                    await asyncio.sleep(min(sleep_interval, remaining_time))
 
     def wait_for_capacity_sync(
         self, amounts: list[float], sleep_interval: float = 1e-1
