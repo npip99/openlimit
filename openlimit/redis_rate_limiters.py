@@ -1,5 +1,6 @@
 # Standard library
 import asyncio
+import typing
 
 # Third party
 import redis
@@ -21,6 +22,7 @@ class RateLimiterWithRedis(object):
         token_counter,
         bucket_key,
         redis_url="redis://localhost:5050",
+        redis: typing.Optional[redis.asyncio.Redis] = None,
         bucket_size_in_seconds: float = 1,
     ):
         # Rate limits
@@ -33,6 +35,7 @@ class RateLimiterWithRedis(object):
 
         # Redis
         self._redis_url = redis_url
+        self._redis = redis
 
         # Bucket size in seconds
         self._bucket_size_in_seconds = bucket_size_in_seconds
@@ -47,9 +50,12 @@ class RateLimiterWithRedis(object):
         if self._buckets:
             return
 
-        db = await redis.asyncio.from_url(
-            self._redis_url, encoding="utf-8", decode_responses=True
-        )
+        if self._redis is not None:
+            db = self._redis
+        else:
+            db = await redis.asyncio.from_url(
+                self._redis_url, encoding="utf-8", decode_responses=True
+            )
 
         self._buckets = RedisBuckets(
             redis=db,
