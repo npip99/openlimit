@@ -49,6 +49,11 @@ class Buckets(object):
         # Create the current time
         current_time = time.time()
 
+        # Determine if the request is serviceable
+        for amount, bucket in zip(amounts, self.buckets):
+            if amount > bucket._rate_per_sec * bucket._bucket_size_in_seconds:
+                raise ValueError(f"Requested capacity is not serviceable. The bucket can support {bucket._rate_per_sec}/sec for {bucket._bucket_size_in_seconds} seconds. The requested amount was {amount}")
+
         # Get the new capacities
         new_capacities = self._get_capacities(current_time=current_time)
 

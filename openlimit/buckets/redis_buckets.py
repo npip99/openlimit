@@ -64,6 +64,11 @@ class RedisBuckets(object):
         await pipeline.execute()
 
     async def _has_capacity_async(self, amounts: list[float]):
+        # Determine if the request is serviceable
+        for amount, bucket in zip(amounts, self.buckets):
+            if amount > bucket._rate_per_sec * bucket._bucket_size_in_seconds:
+                raise ValueError(f"Requested capacity is not serviceable. The bucket can support {bucket._rate_per_sec}/sec for {bucket._bucket_size_in_seconds} seconds. The requested amount was {amount}")
+
 
         # Lock all the buckets
         async with await self._lock(timeout=2):
